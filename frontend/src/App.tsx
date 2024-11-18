@@ -1,15 +1,20 @@
-import React from 'react';
-import logo from './logo.svg';
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+} from "react-router-dom";
 import './App.css';
-import { Input, TextField } from '@mui/material';
+import Header from "./components/Header";
+
 
 function App() {
   return (
-    <div>
-      <TextField label="Outlined" variant="outlined" />
-      <Input></Input>
-
-    </div>
+    <Router>
+      <Header/>
+      <Routes>
+        <Route/>
+      </Routes>
+    </Router>
   );
 }
 
