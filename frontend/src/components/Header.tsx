@@ -5,7 +5,6 @@ export default function Header() {
     <Box>
       <AppBar>
           <Toolbar>
-
           </Toolbar>
       </AppBar>
     </Box>

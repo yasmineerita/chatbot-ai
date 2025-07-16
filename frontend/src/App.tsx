@@ -5,6 +5,7 @@ import {
 } from "react-router-dom";
 import './App.css';
 import Header from "./components/Header";
+import ChatbotPage from "./components/ChatbotPage";
 
 
 function App() {
@@ -12,7 +13,10 @@ function App() {
     <Router>
       <Header/>
       <Routes>
-        <Route/>
+        <Route
+          path="/"
+          element={<ChatbotPage/>}
+        />
       </Routes>
     </Router>
   );
