@@ -3,8 +3,10 @@ import uvicorn
 import logging
 
 from dotenv import load_dotenv, find_dotenv
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
+
+import chatbot
 
 app = FastAPI()
 logging.basicConfig(level=logging.DEBUG)
@@ -54,8 +56,15 @@ async def get():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-        await websocket.send_text(f"Message text was: {data}")
+    try: 
+        while True:
+            data = await websocket.receive_text()
+            print(f"Raw message from client: {data}")
+            chatbotResponse = chatbot.generate_response(data)
+            await websocket.send_text(chatbotResponse)
+    except WebSocketDisconnect:
+        print("Client disconnected")
+
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8085, log_level="debug")

@@ -30,10 +30,9 @@ MODEL_PATH = os.path.join(os.getcwd() + os.getenv("MODEL_PATH"))
 #     verbose=False,
 # )
 
-# llm = Ollama(model="llama3.1:latest", request_timeout=120.0)
 template = """Question: {question}
 
-Answer: Please provide the correct answer to the question. If the question requires a detailed explanation or multiple steps (e.g., math problems, process-oriented questions), provide the answer in a step-by-step format. If the question can be answered directly, give a concise response without steps.
+Please provide the correct answer to the question. If the question requires a detailed explanation or multiple steps (e.g., math problems, process-oriented questions), provide the answer in a step-by-step format. If the question can be answered directly, give a concise response without steps.
 """
 
 prompt = PromptTemplate.from_template(template)
@@ -54,6 +53,7 @@ llm = LlamaCpp(
 
 def generate_response(message: str):
   message = message.lower()
+  print("user query:", message)
 
   if "hello" in message:
     return "Hello there! How can I help you?"
@@ -66,7 +66,3 @@ def generate_response(message: str):
   else:
     formatted_prompt = prompt.format(question=message)
     return llm.invoke(formatted_prompt)
-
-
-response = generate_response("how to take care orchid")
-print("Response: \n", response)
