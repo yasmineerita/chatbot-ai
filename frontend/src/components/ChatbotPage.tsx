@@ -10,6 +10,7 @@ import {
   Toolbar,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
+import ReactMarkdown from 'react-markdown';
 
 export default function ChatbotPage() {
   const socketRef = useRef<WebSocket | null>(null)
@@ -18,6 +19,22 @@ export default function ChatbotPage() {
   ]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  function cleanLLMResponse(response: string): string {
+    try {
+      // If response is JSON stringified (e.g. from backend)
+      if (response.startsWith("'") || response.includes("\\n")) {
+        response = JSON.parse(response.replace(/'''+|'''/g, "").trim());
+      }
+    } catch (e) {
+      // Ignore parse error and continue
+    }
+  
+    // Remove unwanted prefixes or labels
+    response = response.replace(/^AI\s*:\s*/i, "");
+    // response = response.replace(/^'+|'+$/g, ""); // Remove extra single quotes
+    return response.trim();
+  }
 
   useEffect(() => {
     socketRef.current = new WebSocket("ws://0.0.0.0:8085/ws");
@@ -50,6 +67,7 @@ export default function ChatbotPage() {
     if (!input.trim()) return;
 
     const newMessage = { sender: "user", text: input };
+    setMessages((prev) => [...prev, newMessage])
     console.log("new Msg: ", newMessage)
     const socket = socketRef.current;
   if (!socket || socket.readyState !== WebSocket.OPEN) {
@@ -60,7 +78,9 @@ export default function ChatbotPage() {
   setInput("");
 
     socket.onmessage = (event: MessageEvent) => {
-      setMessages((prev) => [...prev, event.data]);
+      console.log("prev data:", event.data)
+      const newMessage = { sender: "assistant", text: event.data };
+      setMessages((prev) => [...prev, newMessage]);
     };
 
   };
@@ -127,7 +147,8 @@ export default function ChatbotPage() {
                   borderRadius: 2,
                 }}
               >
-                <Typography variant="body2">{msg.text}</Typography>
+                {/* <Typography variant="body2">{msg.text}</Typography> */}
+                <ReactMarkdown>{cleanLLMResponse(msg.text)}</ReactMarkdown>
               </Paper>
             </Box>
           ))}
