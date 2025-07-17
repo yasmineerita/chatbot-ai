@@ -4,6 +4,8 @@ from dotenv import load_dotenv, find_dotenv
 from langchain_community.llms import LlamaCpp
 from langchain_core.callbacks import CallbackManager, StreamingStdOutCallbackHandler
 from langchain_core.prompts import PromptTemplate
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, trim_messages
+import json
 
 env_file = find_dotenv('.env.' + os.environ['var'])
 load_dotenv(env_file)
@@ -34,8 +36,15 @@ template = """Question: {question}
 
 Please provide the correct answer to the question. If the question requires a detailed explanation or multiple steps (e.g., math problems, process-oriented questions), provide the answer in a step-by-step format. If the question can be answered directly, give a concise response without steps.
 """
-
-prompt = PromptTemplate.from_template(template)
+messages = [
+  SystemMessage(
+    content="You are an AI assistant. Provide only the answer without prefacing it with phrases like 'AI Chatbot:', 'As an AI', 'AI:', 'Assistant:', etc."
+        "Do not include labels such as 'Human Message', 'AI Message', or 'AI Chatbot'. "
+        "If the answer requires explanation, use clear step-by-step format. Otherwise, give a concise factual answer. "
+        "Start the response directly with the content."
+    )
+]
+# prompt = PromptTemplate.from_template(template)
 
 # Callbacks support token-wise streaming
 callback_manager = CallbackManager([StreamingStdOutCallbackHandler()])
@@ -53,16 +62,30 @@ llm = LlamaCpp(
 
 def generate_response(message: str):
   message = message.lower()
-  print("user query:", message)
+  parsed = json.loads(message)
+  user_text = parsed["text"]
+  print("user query:", user_text)
 
-  if "hello" in message:
+  if "hello" in user_text:
     return "Hello there! How can I help you?"
-  elif "how are you" in message:
+  elif "how are you" in user_text:
     return "I'm doing well. Thanks for asking."
-  elif "your name" in message:
+  elif "your name" in user_text:
     return "My name is Yasmineerita."
-  elif "bye" in message or "exit" in message:
+  elif "bye" in user_text or "exit" in user_text:
     return "Baibai~!!~ See you next time."
   else:
-    formatted_prompt = prompt.format(question=message)
-    return llm.invoke(formatted_prompt)
+    messages.append(HumanMessage(content=user_text))
+    trimmed_msg = trim_messages(
+      messages,
+      max_tokens=300,
+      strategy="last",
+      token_counter=llm,
+      allow_partial=True,
+      include_system=True
+    )
+    # formatted_prompt = prompt.format(question=user_text)
+    response = llm.invoke(trimmed_msg)
+    messages.append(AIMessage(content=response))
+    print("LLM response: ",response)
+    return response
