@@ -7,6 +7,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 
 import chatbot
+import json
 
 app = FastAPI()
 logging.basicConfig(level=logging.DEBUG)
@@ -60,8 +61,14 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             print(f"Raw message from client: {data}")
-            chatbotResponse = chatbot.generate_response(data)
-            await websocket.send_text(chatbotResponse)
+            try:
+                parsed = json.loads(data)
+                print(f"Parsed JSON: {parsed}")
+                chatbotResponse = chatbot.generate_response(data)
+                await websocket.send_text(chatbotResponse)
+            except json.JSONDecodeError:
+                print("Could not parse message as JSON")
+            
     except WebSocketDisconnect:
         print("Client disconnected")
 
